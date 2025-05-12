@@ -1,0 +1,48 @@
+<style>
+  .particle {
+    position: absolute;
+    color: #34d399;
+    font-size: 1.5rem;
+    opacity: 0.15;
+    animation: floatDown 10s linear infinite;
+  }
+
+  @keyframes floatDown {
+    0% {
+      transform: translateY(-10%) rotate(0deg);
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.15;
+    }
+    100% {
+      transform: translateY(110vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  .money-bg {
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+</style>
+
+<div class="money-bg fixed inset-0 w-full h-full">
+  {
+    Array.from({ length: 25 }).map((_, i) => {
+      const left = Math.random() * 100;
+      const delay = Math.random() * 10;
+      const size = 1 + Math.random() * 2;
+
+      return (
+        <span
+          class="particle"
+          style={`left: ${left}%; font-size: ${size}rem; animation-delay: ${delay}s;`}
+        >
+          $
+        </span>
+      );
+    })
+  }
+</div>
