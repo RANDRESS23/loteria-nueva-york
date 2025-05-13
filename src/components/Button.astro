@@ -1,0 +1,46 @@
+---
+const { click, id } = Astro.props;
+---
+
+<button
+  @click={click}
+  id={id}
+  class="button-animate relative rounded-lg bg-gradient-to-r from-[#00d492] via-[#007a55] to-[#00d492] px-5 py-2.5 font-semibold text-white shadow-lg shadow-[#00d492]/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-[#00d492]/40 mt-6 w-full cursor-pointer duration-300 border-none"
+>
+  <slot />
+</button>
+
+<style>
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%) rotate(30deg);
+    }
+    100% {
+      transform: translateX(100%) rotate(30deg);
+    }
+  }
+
+  .button-animate {
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .button-animate::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transform: rotate(30deg);
+    animation: shine 3s linear infinite;
+  }
+</style>
