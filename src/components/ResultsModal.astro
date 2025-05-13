@@ -94,11 +94,11 @@ import Button from "./Button.astro";
           <span id="houseTickets"></span>
         </p>
         <p>
-          💰 <strong>Perdió $1:</strong>
+          💰 <strong>Pérdida por $1:</strong>
           <span id="lost1"></span>
         </p>
         <p>
-          💸 <strong>Perdió $5:</strong>
+          💸 <strong>Pérdida por $5:</strong>
           <span id="lost5"></span>
         </p>
         <p>
@@ -106,12 +106,8 @@ import Button from "./Button.astro";
           <span id="houseIncome"></span>
         </p>
         <p>
-          🏦 <strong>Pérdida por $1:</strong>
-          <span id="totalLost1"></span>
-        </p>
-        <p>
-          🏦 <strong>Pérdida por $5:</strong>
-          <span id="totalLost5"></span>
+          🏦 <strong>Pérdidas totales:</strong>
+          <span id="totalLost"></span>
         </p>
         <p class="sm:col-span-2 flex items-center gap-2">
           📊 <strong>Resultado:</strong>
@@ -182,8 +178,7 @@ import Button from "./Button.astro";
   const $lost1 = document.getElementById("lost1") as HTMLElement;
   const $lost5 = document.getElementById("lost5") as HTMLElement;
   const $houseIncome = document.getElementById("houseIncome") as HTMLElement;
-  const $totalLost1 = document.getElementById("totalLost1") as HTMLElement;
-  const $totalLost5 = document.getElementById("totalLost5") as HTMLElement;
+  const $totalLost = document.getElementById("totalLost") as HTMLElement;
   const $resultsModal = document.getElementById("resultsModal") as HTMLElement;
 
   document.addEventListener("get-tickets-result", (event: Event) => {
@@ -211,8 +206,8 @@ import Button from "./Button.astro";
 
     $clientTickets.textContent = clientTickets.toString();
     $houseTickets.textContent = houseTickets.toString();
-    $won1.textContent = `${won1.toString()} tiquetes`;
-    $won5.textContent = `${won5.toString()} tiquetes`;
+    $won1.textContent = `$${won1} (${won1.toString()} tiquetes)`;
+    $won5.textContent = `$${won5 * 5} (${won5.toString()} tiquetes)`;
     $lostTickets.textContent = `${lostTickets.toString()} tiquetes`;
     $totalSpent.textContent = `$${totalSpent.toString()}`;
     $totalWon.textContent = `$${totalWon.toString()}`;
@@ -223,11 +218,10 @@ import Button from "./Button.astro";
     $houseGain.textContent = `$ ${houseGain.toString()} ${houseGain > 0 ? "de ganancias" : "de perdidas"}`;
     $houseGain.style.color = houseGain > 0 ? "green" : "red";
 
-    $lost1.textContent = `${lost1.toString()} tiquetes`;
-    $lost5.textContent = `${lost5.toString()} tiquetes`;
+    $lost1.textContent = `$${totalLost1.toString()} (${lost1.toString()} tiquetes)`;
+    $lost5.textContent = `$${totalLost5.toString()} (${lost5.toString()} tiquetes)`;
     $houseIncome.textContent = `$${houseIncome.toString()}`;
-    $totalLost1.textContent = `$${totalLost1.toString()}`;
-    $totalLost5.textContent = `$${totalLost5.toString()}`;
+    $totalLost.textContent = `$${(totalLost1 + totalLost5).toString()}`;
 
     // Limpiar resultados anteriores
     $resultsModal.scrollTop = 0;
@@ -300,7 +294,7 @@ import Button from "./Button.astro";
 
     // Agregar listener para limpiar cuando el modal se cierre
     document.addEventListener("alpine:hide", (event) => {
-      if (event.target.closest("[x-show]") === $resultsModal.closest("[x-show]")) {
+      if (event.target instanceof Element && event.target.closest("[x-show]") === $resultsModal.closest("[x-show]")) {
         cleanup();
       }
     }, { once: true });
