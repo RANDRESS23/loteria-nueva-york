@@ -4,6 +4,7 @@ import Button from "./Button.astro";
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
 ></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div
   x-data="{ open: false }"
@@ -36,7 +37,7 @@ import Button from "./Button.astro";
         </svg>
         Datos del Cliente
       </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
         <p>
           🎟️ <strong>Tiquetes comprados:</strong>
           <span id="clientTickets"></span>
@@ -88,7 +89,7 @@ import Button from "./Button.astro";
         </svg>
         Datos de la Casa
       </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
         <p>
           🏷️ <strong>Tiquetes vendidos:</strong>
           <span id="houseTickets"></span>
@@ -140,6 +141,62 @@ import Button from "./Button.astro";
       <Button click="open = false"> Cerrar </Button>
     </div>
   </div>
+
+  <section id="goodness-of-fit" class="mt-8 max-w-6xl mx-auto">
+    <div
+      class="bg-white hover:shadow-lg transition-shadow duration-300 rounded-xl p-6 space-y-4 animate-fade-in border border-emerald-200"
+    >
+      <h2 class="text-xl font-bold text-emerald-800">
+        📊 Prueba de Bondad de Ajuste (Chi-cuadrado)
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+          <h3 class="font-semibold text-emerald-700 mb-1">
+            📈 Valores Observados
+          </h3>
+          <ul id="observed-values" class="text-gray-800 list-disc list-inside">
+          </ul>
+        </div>
+
+        <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+          <h3 class="font-semibold text-emerald-700 mb-1">
+            📐 Valores Esperados
+          </h3>
+          <ul id="expected-values" class="text-gray-800 list-disc list-inside">
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+        <p class="text-emerald-800 font-medium">
+          χ² Calculado: <span id="chi-squared" class="font-extrabold"></span>
+        </p>
+        <p id="chi-result" class="font-semibold mt-2"></p>
+      </div>
+
+      <details class="text-gray-600 cursor-pointer mt-2">
+        <summary class="font-medium text-emerald-700"
+          >¿Qué significa esta prueba?</summary
+        >
+        <p class="mt-2">
+          Comparamos si los premios obtenidos ($0, $1 y $5) ocurren con la
+          frecuencia que debería según la probabilidad esperada. Si el valor χ²
+          es muy alto, significa que los resultados no son aleatorios o la
+          distribución está mal configurada.
+        </p>
+      </details>
+    </div>
+
+    <div
+      class="bg-white p-4 rounded-lg hover:shadow-lg transition-shadow duration-300 mt-10 border border-emerald-200"
+    >
+      <h3 class="text-lg font-semibold text-emerald-800 mb-2">
+        📊 Comparación Visual
+      </h3>
+      <canvas id="chiBarChart" class="w-full h-48"></canvas>
+    </div>
+  </section>
 </div>
 
 <style>
@@ -180,6 +237,101 @@ import Button from "./Button.astro";
   const $houseIncome = document.getElementById("houseIncome") as HTMLElement;
   const $totalLost = document.getElementById("totalLost") as HTMLElement;
   const $resultsModal = document.getElementById("resultsModal") as HTMLElement;
+
+  function chiSquaredTest(observed: number[], expected: number[]) {
+    return observed.reduce((sum, obs, i) => {
+      const exp = expected[i];
+      return sum + Math.pow(obs - exp, 2) / exp;
+    }, 0);
+  }
+
+  let chiChartInstance: any = null;
+
+  function renderGoodnessOfFitTest(
+    results: { ticket: number; prize: number }[]
+  ) {
+    const totalTickets = results.length;
+
+    const observed = [
+      results.filter((r) => r.prize === 0).length,
+      results.filter((r) => r.prize === 1).length,
+      results.filter((r) => r.prize === 5).length,
+    ];
+
+    const expected = [
+      totalTickets * 0.75,
+      totalTickets * 0.125,
+      totalTickets * 0.125,
+    ];
+
+    const chi = chiSquaredTest(observed, expected);
+    const passed = chi <= 5.99;
+
+    // Mostrar los datos en la UI
+    const observedList = document.getElementById(
+      "observed-values"
+    ) as HTMLElement;
+    const expectedList = document.getElementById(
+      "expected-values"
+    ) as HTMLElement;
+    observedList.innerHTML = `
+      <li>🎟️ Perdidos ($0): <span class="font-bold">${observed[0]} tiquetes</span></li>
+      <li>💵 Premio $1: <span class="font-bold">${observed[1]} tiquetes</span></li>
+      <li>💰 Premio $5: <span class="font-bold">${observed[2]} tiquetes</span></li>
+    `;
+    expectedList.innerHTML = `
+      <li>🎟️ Perdidos ($0): <span class="font-bold">${expected[0]} tiquetes</span></li>
+      <li>💵 Premio $1: <span class="font-bold">${expected[1]} tiquetes</span></li>
+      <li>💰 Premio $5: <span class="font-bold">${expected[2]} tiquetes</span></li>
+    `;
+
+    (document.getElementById("chi-squared") as HTMLElement).textContent =
+      chi.toFixed(2);
+    (document.getElementById("chi-result") as HTMLElement).textContent = passed
+      ? "✅ Los resultados siguen la distribución esperada."
+      : "❌ Los resultados NO siguen la distribución esperada.";
+    (document.getElementById("chi-result") as HTMLElement).style.color = passed
+      ? "green"
+      : "red";
+
+    // Renderizar el gráfico
+    const ctx = (
+      document.getElementById("chiBarChart") as HTMLCanvasElement
+    ).getContext("2d");
+
+    if (chiChartInstance) chiChartInstance.destroy(); // Elimina el anterior
+
+    // Use window.Chart to ensure global access
+    chiChartInstance = new (window as any).Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["$0 (Perdido)", "$1", "$5"],
+        datasets: [
+          {
+            label: "Observado",
+            data: observed,
+            backgroundColor: "#4F46E5", // Indigo
+          },
+          {
+            label: "Esperado",
+            data: expected,
+            backgroundColor: "#10B981", // Emerald
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0,
+            },
+          },
+        },
+      },
+    });
+  }
 
   document.addEventListener("get-tickets-result", (event: Event) => {
     const customEvent = event as CustomEvent<{
@@ -223,6 +375,8 @@ import Button from "./Button.astro";
     $houseIncome.textContent = `$${houseIncome.toString()}`;
     $totalLost.textContent = `$${(totalLost1 + totalLost5).toString()}`;
 
+    renderGoodnessOfFitTest(results);
+
     // Limpiar resultados anteriores
     $resultsModal.scrollTop = 0;
     $resultsModal.innerHTML = "";
@@ -232,7 +386,7 @@ import Button from "./Button.astro";
     resultsContainer.className = "results-container";
     const sentinel = document.createElement("div");
     sentinel.className = "sentinel h-4"; // Altura para asegurar visibilidad
-    
+
     $resultsModal.appendChild(resultsContainer);
     $resultsModal.appendChild(sentinel);
 
@@ -242,7 +396,7 @@ import Button from "./Button.astro";
 
     const renderNextBatch = () => {
       if (isLoading || currentIndex >= results.length) return;
-      
+
       isLoading = true;
       const fragment = document.createDocumentFragment();
       const endIndex = Math.min(currentIndex + ITEMS_PER_PAGE, results.length);
@@ -264,7 +418,8 @@ import Button from "./Button.astro";
       isLoading = false;
 
       // Actualizar visibilidad del sentinel
-      sentinel.style.display = currentIndex >= results.length ? "none" : "block";
+      sentinel.style.display =
+        currentIndex >= results.length ? "none" : "block";
     };
 
     // Crear un nuevo IntersectionObserver
@@ -279,7 +434,7 @@ import Button from "./Button.astro";
       {
         root: $resultsModal,
         rootMargin: "100px",
-        threshold: 0.1
+        threshold: 0.1,
       }
     );
 
@@ -293,10 +448,17 @@ import Button from "./Button.astro";
     };
 
     // Agregar listener para limpiar cuando el modal se cierre
-    document.addEventListener("alpine:hide", (event) => {
-      if (event.target instanceof Element && event.target.closest("[x-show]") === $resultsModal.closest("[x-show]")) {
-        cleanup();
-      }
-    }, { once: true });
+    document.addEventListener(
+      "alpine:hide",
+      (event) => {
+        if (
+          event.target instanceof Element &&
+          event.target.closest("[x-show]") === $resultsModal.closest("[x-show]")
+        ) {
+          cleanup();
+        }
+      },
+      { once: true }
+    );
   });
 </script>
