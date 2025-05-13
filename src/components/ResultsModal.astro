@@ -1,0 +1,308 @@
+---
+import Button from "./Button.astro";
+---
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+></script>
+
+<div
+  x-data="{ open: false }"
+  class="w-full mx-auto mt-8 relative z-10 animate-fade-in hidden"
+  id="results"
+>
+  <div class="max-w-md mx-auto">
+    <Button click="open = true">
+      Ver Resultados
+      <span class="ml-1 inline-block h-4 w-4 animate-bounce">💰</span>
+    </Button>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-6 mt-8 justify-center items-center">
+    <!-- Cliente -->
+    <div
+      class="bg-white hover:shadow-lg transition-shadow duration-300 rounded-2xl p-6 space-y-4 w-full max-w-xl border border-emerald-200"
+    >
+      <h3
+        class="text-lg font-semibold text-emerald-800 border-b pb-2 flex items-center gap-2"
+      >
+        <svg
+          class="w-5 h-5 text-emerald-600"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            d="M10 2a5 5 0 015 5v1a5 5 0 01-10 0V7a5 5 0 015-5zm0 10a7 7 0 00-7 7h2a5 5 0 0110 0h2a7 7 0 00-7-7z"
+          ></path>
+        </svg>
+        Datos del Cliente
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+        <p>
+          🎟️ <strong>Tiquetes comprados:</strong>
+          <span id="clientTickets"></span>
+        </p>
+        <p>
+          💵 <strong>Premios de $1:</strong>
+          <span id="won1"></span>
+        </p>
+        <p>
+          💸 <strong>Premios de $5:</strong>
+          <span id="won5"></span>
+        </p>
+        <p>
+          ❌ <strong>Sin premio:</strong>
+          <span id="lostTickets"></span>
+        </p>
+        <p>
+          🤑 <strong>Total ganado:</strong>
+          <span id="totalWon"></span>
+        </p>
+        <p>
+          🧾 <strong>Total gastado:</strong>
+          <span id="totalSpent"></span>
+        </p>
+        <p class="sm:col-span-2 flex items-center gap-2">
+          📉 <strong>Resultado:</strong>
+          <span>
+            <span id="userLoss"></span>
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Casa -->
+    <div
+      class="bg-white hover:shadow-lg transition-shadow duration-300 rounded-2xl p-6 space-y-4 w-full max-w-xl border border-emerald-200"
+    >
+      <h3
+        class="text-lg font-semibold text-emerald-800 border-b pb-2 flex items-center gap-2"
+      >
+        <svg
+          class="w-5 h-5 text-emerald-600"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            d="M2 8.5A1.5 1.5 0 013.5 7h13a1.5 1.5 0 011.5 1.5V17a1 1 0 01-1 1h-1v-4a1 1 0 00-1-1h-10a1 1 0 00-1 1v4h-1a1 1 0 01-1-1V8.5z"
+          ></path>
+        </svg>
+        Datos de la Casa
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+        <p>
+          🏷️ <strong>Tiquetes vendidos:</strong>
+          <span id="houseTickets"></span>
+        </p>
+        <p>
+          💰 <strong>Perdió $1:</strong>
+          <span id="lost1"></span>
+        </p>
+        <p>
+          💸 <strong>Perdió $5:</strong>
+          <span id="lost5"></span>
+        </p>
+        <p>
+          📈 <strong>Ingreso por ventas:</strong>
+          <span id="houseIncome"></span>
+        </p>
+        <p>
+          🏦 <strong>Pérdida por $1:</strong>
+          <span id="totalLost1"></span>
+        </p>
+        <p>
+          🏦 <strong>Pérdida por $5:</strong>
+          <span id="totalLost5"></span>
+        </p>
+        <p class="sm:col-span-2 flex items-center gap-2">
+          📊 <strong>Resultado:</strong>
+          <span class="{{ houseGain > 0 ? 'text-green-600' : 'text-red-600' }}">
+            <span id="houseGain"></span>
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div
+    x-show="open"
+    x-cloak
+    x-transition
+    class="fixed inset-0 bg-white/20 backdrop-blur-xl flex items-center justify-center z-50"
+  >
+    <div
+      @click.away="open = false"
+      class="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative animate-fade-in m-4"
+    >
+      <h2 class="text-2xl font-bold text-emerald-600 mb-4">Resultados</h2>
+
+      <ul
+        class="space-y-2 max-h-[300px] pr-2 overflow-y-auto"
+        id="resultsModal"
+      >
+      </ul>
+
+      <Button click="open = false"> Cerrar </Button>
+    </div>
+  </div>
+</div>
+
+<style>
+  [x-cloak] {
+    display: none;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    0% {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  const $clientTickets = document.getElementById(
+    "clientTickets"
+  ) as HTMLElement;
+  const $houseTickets = document.getElementById("houseTickets") as HTMLElement;
+  const $won1 = document.getElementById("won1") as HTMLElement;
+  const $won5 = document.getElementById("won5") as HTMLElement;
+  const $lostTickets = document.getElementById("lostTickets") as HTMLElement;
+  const $totalSpent = document.getElementById("totalSpent") as HTMLElement;
+  const $totalWon = document.getElementById("totalWon") as HTMLElement;
+  const $userLoss = document.getElementById("userLoss") as HTMLElement;
+  const $houseGain = document.getElementById("houseGain") as HTMLElement;
+  const $lost1 = document.getElementById("lost1") as HTMLElement;
+  const $lost5 = document.getElementById("lost5") as HTMLElement;
+  const $houseIncome = document.getElementById("houseIncome") as HTMLElement;
+  const $totalLost1 = document.getElementById("totalLost1") as HTMLElement;
+  const $totalLost5 = document.getElementById("totalLost5") as HTMLElement;
+  const $resultsModal = document.getElementById("resultsModal") as HTMLElement;
+
+  document.addEventListener("get-tickets-result", (event: Event) => {
+    const customEvent = event as CustomEvent<{
+      results: { ticket: number; prize: number }[];
+    }>;
+    const results = customEvent.detail.results;
+
+    const totalSpent = results.length * 1 * 0.75;
+    const totalWon = results.reduce((acc, r) => acc + r.prize, 0);
+    const houseGain = totalSpent - totalWon;
+    const userLoss = totalWon - totalSpent;
+
+    const clientTickets = results.length;
+    const won1 = results.filter((r) => r.prize === 1).length;
+    const won5 = results.filter((r) => r.prize === 5).length;
+    const lostTickets = results.filter((r) => r.prize === 0).length;
+
+    const houseTickets = results.length;
+    const lost1 = results.filter((r) => r.prize === 1).length;
+    const lost5 = results.filter((r) => r.prize === 5).length;
+    const houseIncome = totalSpent;
+    const totalLost1 = results.filter((r) => r.prize === 1).length * 1;
+    const totalLost5 = results.filter((r) => r.prize === 5).length * 5;
+
+    $clientTickets.textContent = clientTickets.toString();
+    $houseTickets.textContent = houseTickets.toString();
+    $won1.textContent = `${won1.toString()} tiquetes`;
+    $won5.textContent = `${won5.toString()} tiquetes`;
+    $lostTickets.textContent = `${lostTickets.toString()} tiquetes`;
+    $totalSpent.textContent = `$${totalSpent.toString()}`;
+    $totalWon.textContent = `$${totalWon.toString()}`;
+
+    $userLoss.textContent = `$ ${userLoss.toString()} ${userLoss > 0 ? "de ganancias" : "de perdidas"}`;
+    $userLoss.style.color = userLoss > 0 ? "green" : "red";
+
+    $houseGain.textContent = `$ ${houseGain.toString()} ${houseGain > 0 ? "de ganancias" : "de perdidas"}`;
+    $houseGain.style.color = houseGain > 0 ? "green" : "red";
+
+    $lost1.textContent = `${lost1.toString()} tiquetes`;
+    $lost5.textContent = `${lost5.toString()} tiquetes`;
+    $houseIncome.textContent = `$${houseIncome.toString()}`;
+    $totalLost1.textContent = `$${totalLost1.toString()}`;
+    $totalLost5.textContent = `$${totalLost5.toString()}`;
+
+    // Limpiar resultados anteriores
+    $resultsModal.scrollTop = 0;
+    $resultsModal.innerHTML = "";
+
+    // Crear el contenedor de resultados y el sentinel
+    const resultsContainer = document.createElement("div");
+    resultsContainer.className = "results-container";
+    const sentinel = document.createElement("div");
+    sentinel.className = "sentinel h-4"; // Altura para asegurar visibilidad
+    
+    $resultsModal.appendChild(resultsContainer);
+    $resultsModal.appendChild(sentinel);
+
+    let currentIndex = 0;
+    const ITEMS_PER_PAGE = 10;
+    let isLoading = false;
+
+    const renderNextBatch = () => {
+      if (isLoading || currentIndex >= results.length) return;
+      
+      isLoading = true;
+      const fragment = document.createDocumentFragment();
+      const endIndex = Math.min(currentIndex + ITEMS_PER_PAGE, results.length);
+
+      for (let i = currentIndex; i < endIndex; i++) {
+        const result = results[i];
+        const li = document.createElement("li");
+        li.className =
+          "p-3 rounded-xl bg-emerald-50 text-emerald-900 shadow-sm animate-fade-in mb-2";
+        li.innerHTML = `
+          🎟️ Tiquete #${result.ticket} —
+          ${result.prize > 0 ? `Ganó $${result.prize}` : "No ganó 😢"}
+        `;
+        fragment.appendChild(li);
+      }
+
+      resultsContainer.appendChild(fragment);
+      currentIndex = endIndex;
+      isLoading = false;
+
+      // Actualizar visibilidad del sentinel
+      sentinel.style.display = currentIndex >= results.length ? "none" : "block";
+    };
+
+    // Crear un nuevo IntersectionObserver
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && currentIndex < results.length) {
+            renderNextBatch();
+          }
+        });
+      },
+      {
+        root: $resultsModal,
+        rootMargin: "100px",
+        threshold: 0.1
+      }
+    );
+
+    // Observar el sentinel y renderizar el primer batch
+    observer.observe(sentinel);
+    renderNextBatch();
+
+    // Limpiar el observer cuando el modal se cierre
+    const cleanup = () => {
+      observer.disconnect();
+    };
+
+    // Agregar listener para limpiar cuando el modal se cierre
+    document.addEventListener("alpine:hide", (event) => {
+      if (event.target.closest("[x-show]") === $resultsModal.closest("[x-show]")) {
+        cleanup();
+      }
+    }, { once: true });
+  });
+</script>
