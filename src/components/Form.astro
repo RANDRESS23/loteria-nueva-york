@@ -1,0 +1,77 @@
+---
+import Button from "./Button.astro";
+---
+
+<form
+  class="bg-white border border-emerald-200 shadow-lg rounded-xl px-6 py-8 w-full max-w-md mt-7"
+  id="form"
+>
+  <label for="tickets" class="block font-medium mb-2 text-emerald-800">
+    Número de tiquetes a comprar: (máximo 100.000)
+  </label>
+  <input
+    type="number"
+    id="tickets"
+    name="tickets"
+    min="1"
+    max="100000"
+    placeholder="Ej: 10"
+    required
+    class="w-full px-4 py-2.5 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-emerald-900"
+  />
+  <Button>
+    Generar Resultados
+    <span class="ml-1 inline-block h-4 w-4 animate-bounce">🍀</span>
+  </Button>
+</form>
+
+<script>
+  import confetti from "canvas-confetti";
+
+  const $form = document.getElementById("form") as HTMLFormElement;
+
+  const generateTickets = (n: number) => {
+    const results = [];
+
+    for (let i = 1; i <= n; i++) {
+      // Generar 3 filas con 2 columnas: cada casilla es 1 o 5
+      const matrix = Array.from({ length: 3 }, () => [
+        Math.random() < 0.5 ? 1 : 5,
+        Math.random() < 0.5 ? 1 : 5,
+      ]);
+
+      // Simular el raspado: elegir una casilla aleatoria de cada fila
+      const scratched = matrix.map((row) => row[Math.floor(Math.random() * 2)]);
+
+      // Verificar si todas las raspadas son iguales
+      const allEqual = scratched.every((val) => val === scratched[0]);
+      const prize = allEqual ? scratched[0] : 0;
+
+      results.push({ ticket: i, prize });
+    }
+
+    return results;
+  };
+
+  $form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const tickets = formData.get("tickets");
+    const results = generateTickets(Number(tickets));
+
+    const event = new CustomEvent("get-tickets-result", {
+      detail: { results },
+    });
+    document.dispatchEvent(event);
+
+    const $results = document.getElementById("results") as HTMLElement;
+    $results.classList.remove("hidden");
+
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  });
+</script>
