@@ -35,10 +35,12 @@ import Button from "./Button.astro";
 
     for (let i = 1; i <= n; i++) {
       // Generar 3 filas con 2 columnas: cada casilla es 1 o 5
-      const matrix = Array.from({ length: 3 }, () => [
-        Math.random() < 0.5 ? 1 : 5,
-        Math.random() < 0.5 ? 1 : 5,
-      ]);
+      const matrix = Array.from({ length: 3 }, () => {
+        const firstNumber = Math.random() < 0.5 ? 1 : 5;
+        const secondNumber = firstNumber === 1 ? 5 : 1;
+
+        return [firstNumber, secondNumber];
+      });
 
       // Simular el raspado: elegir una casilla aleatoria de cada fila
       const scratched = matrix.map((row) => row[Math.floor(Math.random() * 2)]);
